@@ -1741,14 +1741,367 @@ function SpeedDial({ speed }) {
   )
 }
 
+/* ---------- robot arm geometry ----------
+   A two piece arm anchored at the shoulder. Positions are worked out with
+   simple trigonometry so the gripper genuinely arrives at each box rather
+   than swinging on a fixed path. */
+
+// The shoulder sits high on a pedestal, the way a real palletizing arm is
+// mounted. Everything it reaches for is below it, so the arm always works
+// downwards and never folds back on itself.
+const SHOULDER = { x: 110, y: 95 }
+const UPPER_ARM = 64
+const FOREARM = 58
+
+const BOXES_PER_PALLET = 10
+const COLUMNS = 5
+const BOX_W = 11
+const BOX_H = 10
+const COL_GAP = 12
+const PALLET_X = 148
+const PALLET_DECK_Y = 180
+const REST = { x: 82, y: 124 }
+
+// Where box number `i` ends up on the pallet. Fills the bottom row first.
+function slotFor(index) {
+  const column = index % COLUMNS
+  const row = Math.floor(index / COLUMNS)
+  return {
+    x: PALLET_X + column * COL_GAP,
+    y: PALLET_DECK_Y - BOX_H - row * BOX_H,
+  }
+}
+
+// Point the gripper aims for when placing box number `i`.
+function placePoint(index) {
+  const slot = slotFor(index)
+  return { x: slot.x + BOX_W / 2, y: slot.y - 2 }
+}
+
+// Works out the two joint angles needed to put the gripper on a point.
+// Angles are measured from straight up, clockwise, matching how the arm is
+// drawn. If a point is out of reach it is pulled back to the furthest the
+// arm can actually stretch, so the arm never snaps to an impossible pose.
+function solveArm(targetX, targetY) {
+  let dx = targetX - SHOULDER.x
+  let dy = SHOULDER.y - targetY
+  let reach = Math.hypot(dx, dy)
+
+  const longest = UPPER_ARM + FOREARM - 0.6
+  const shortest = Math.abs(UPPER_ARM - FOREARM) + 0.6
+  if (reach > longest) {
+    const scale = longest / reach
+    dx *= scale
+    dy *= scale
+    reach = longest
+  } else if (reach < shortest) {
+    const scale = shortest / (reach || 0.001)
+    dx *= scale
+    dy *= scale
+    reach = shortest
+  }
+
+  const clamp = (v) => Math.max(-1, Math.min(1, v))
+  const toTarget = Math.atan2(dx, dy)
+  const atShoulder = Math.acos(
+    clamp((reach * reach + UPPER_ARM * UPPER_ARM - FOREARM * FOREARM) / (2 * reach * UPPER_ARM)),
+  )
+  const atElbow = Math.acos(
+    clamp(
+      (UPPER_ARM * UPPER_ARM + FOREARM * FOREARM - reach * reach) / (2 * UPPER_ARM * FOREARM),
+    ),
+  )
+
+  // There are always two ways to bend a two piece arm onto the same point.
+  // Pick the one where the elbow sits above the line from the shoulder to the
+  // box, so the arm reaches over and down like a real machine, rather than
+  // collapsing flat and folding back on itself. The bend mirrors depending on
+  // which side of the pedestal the target is, which is what produces the turn
+  // from the conveyor on the left to the pallet on the right.
+  const towardsLeft = dx < 0
+  const shoulder = towardsLeft ? toTarget + atShoulder : toTarget - atShoulder
+  const bend = Math.PI - atElbow
+  const elbow = towardsLeft ? -bend : bend
+
+  return { shoulder: (shoulder * 180) / Math.PI, elbow: (elbow * 180) / Math.PI }
+}
+
+// Where the gripper actually ends up for a given pair of joint angles. Used to
+// carry the box in the gripper, so it can never drift away from the fingers.
+function gripperPoint(shoulderDeg, elbowDeg) {
+  const a = (shoulderDeg * Math.PI) / 180
+  const b = ((shoulderDeg + elbowDeg) * Math.PI) / 180
+  return {
+    x: SHOULDER.x + UPPER_ARM * Math.sin(a) + FOREARM * Math.sin(b),
+    y: SHOULDER.y - UPPER_ARM * Math.cos(a) - FOREARM * Math.cos(b),
+  }
+}
+
+// No two boxes are handled identically. Three things change as the pallet
+// fills, all of them for reasons a real machine would have:
+//
+//   Where it picks from  Boxes arrive at alternating spots on the belt, so the
+//                        arm reaches slightly further out on every other one.
+//   How high it travels  Once the first layer is down, the arm lifts higher to
+//                        carry the box over the boxes already stacked.
+//   How long it takes    The taller, longer swing across the second layer runs
+//                        a little slower than the short first layer move.
+// Three different ways of handling a box, chosen by where it has to go.
+//
+//   Quick transfer   Near columns on the empty first layer. Nothing is in the
+//                    way, so the arm keeps low and moves briskly.
+//   Long reach       Far columns on the first layer. The arm has to stretch,
+//                    so it lifts a little more and travels more slowly.
+//   Over the stack   Anything on the second layer. The arm lifts well clear of
+//                    the boxes already down, pauses over the slot to line up,
+//                    then lowers slowly and presses the box home.
+function motionFor(index) {
+  const row = Math.floor(index / COLUMNS)
+  const column = index % COLUMNS
+
+  // Boxes arrive at alternating spots along the belt.
+  const pick = { x: index % 2 === 0 ? 44 : 58, y: 143 }
+  const place = placePoint(index)
+
+  const style = row > 0 ? 'overStack' : column >= 3 ? 'longReach' : 'quick'
+
+  if (style === 'quick') {
+    const travelY = 130
+    const lifted = { x: pick.x, y: travelY }
+    const above = { x: place.x, y: travelY }
+    return {
+      style,
+      steps: [
+        { ms: 350, from: REST, to: pick, holding: false, grip: 'open', placed: false },
+        { ms: 150, from: pick, to: pick, holding: false, grip: 'closing', placed: false },
+        { ms: 190, from: pick, to: lifted, holding: true, grip: 'closed', placed: false },
+        { ms: 500, from: lifted, to: above, holding: true, grip: 'closed', placed: false },
+        { ms: 240, from: above, to: place, holding: true, grip: 'closed', placed: false },
+        { ms: 140, from: place, to: place, holding: false, grip: 'opening', placed: true },
+        { ms: 240, from: place, to: REST, holding: false, grip: 'open', placed: true },
+      ],
+    }
+  }
+
+  if (style === 'longReach') {
+    const travelY = 116
+    const lifted = { x: pick.x, y: travelY }
+    const above = { x: place.x, y: travelY }
+    return {
+      style,
+      steps: [
+        { ms: 430, from: REST, to: pick, holding: false, grip: 'open', placed: false },
+        { ms: 180, from: pick, to: pick, holding: false, grip: 'closing', placed: false },
+        { ms: 270, from: pick, to: lifted, holding: true, grip: 'closed', placed: false },
+        { ms: 700, from: lifted, to: above, holding: true, grip: 'closed', placed: false },
+        { ms: 300, from: above, to: place, holding: true, grip: 'closed', placed: false },
+        { ms: 170, from: place, to: place, holding: false, grip: 'opening', placed: true },
+        { ms: 290, from: place, to: REST, holding: false, grip: 'open', placed: true },
+      ],
+    }
+  }
+
+  // Over the stack: highest lift, then a slow seat onto the layer below.
+  // The first box of the row has nothing beside it, so it goes straight down.
+  // The rest hover briefly to line up against the box already placed.
+  const travelY = 96
+  const lifted = { x: pick.x, y: travelY }
+  const above = { x: place.x, y: travelY }
+  const justAbove = { x: place.x, y: place.y - 7 }
+  const needsAligning = column > 0
+
+  const steps = [
+    { ms: 420, from: REST, to: pick, holding: false, grip: 'open', placed: false },
+    { ms: 180, from: pick, to: pick, holding: false, grip: 'closing', placed: false },
+    { ms: 330, from: pick, to: lifted, holding: true, grip: 'closed', placed: false },
+    { ms: 730, from: lifted, to: above, holding: true, grip: 'closed', placed: false },
+  ]
+
+  if (needsAligning) {
+    steps.push({ ms: 240, from: above, to: above, holding: true, grip: 'closed', placed: false })
+  }
+
+  steps.push(
+    { ms: 300, from: above, to: justAbove, holding: true, grip: 'closed', placed: false },
+    { ms: needsAligning ? 240 : 190, from: justAbove, to: place, holding: true, grip: 'closed', placed: false },
+    { ms: 170, from: place, to: place, holding: false, grip: 'opening', placed: true },
+    { ms: 300, from: place, to: REST, holding: false, grip: 'open', placed: true },
+  )
+
+  return { style: needsAligning ? style : 'overStackDirect', steps }
+}
+
+// Each box gets its own slot on one shared timeline, because they no longer
+// all take the same amount of time.
+const TIMELINE = []
+let runningTotal = 0
+for (let i = 0; i < BOXES_PER_PALLET; i += 1) {
+  const { style, steps } = motionFor(i)
+  const duration = steps.reduce((total, step) => total + step.ms, 0)
+  TIMELINE.push({ start: runningTotal, duration, steps, style })
+  runningTotal += duration
+}
+
+const STACKING_MS = runningTotal
+const PALLET_PAUSE_MS = 1600
+const CYCLE_MS = STACKING_MS + PALLET_PAUSE_MS
+
+const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2)
+
 function RobotArm({ running }) {
+  const shoulderRef = useRef(null)
+  const elbowRef = useRef(null)
+  const carriedRef = useRef(null)
+  const fingerLeftRef = useRef(null)
+  const fingerRightRef = useRef(null)
+  const clockRef = useRef({ elapsed: 0, last: 0, frame: 0 })
+  const [placed, setPlaced] = useState(0)
+
+  useEffect(() => {
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    // Draws one moment of the cycle. Transforms are written straight to the
+    // elements so the browser is not re-rendering React sixty times a second.
+    function paint(elapsed) {
+      const withinCycle = elapsed % CYCLE_MS
+      const stacking = withinCycle < STACKING_MS
+
+      let holding = false
+      let grip = 'open'
+      let done = BOXES_PER_PALLET
+      let angles = solveArm(REST.x, REST.y)
+
+      if (stacking) {
+        let index = 0
+        while (
+          index < TIMELINE.length - 1 &&
+          withinCycle >= TIMELINE[index].start + TIMELINE[index].duration
+        ) {
+          index += 1
+        }
+
+        const box = TIMELINE[index]
+        done = index
+        let intoBox = withinCycle - box.start
+
+        let step = box.steps[box.steps.length - 1]
+        for (let i = 0; i < box.steps.length; i += 1) {
+          if (intoBox < box.steps[i].ms) {
+            step = box.steps[i]
+            break
+          }
+          intoBox -= box.steps[i].ms
+        }
+
+        const progress = easeInOut(Math.min(1, intoBox / step.ms))
+
+        // The two joints are moved between their start and end angles rather
+        // than dragging the gripper along a straight line. This is how a real
+        // arm travels, and it is what makes the machine visibly swing left to
+        // the conveyor and then right to the pallet.
+        const startAngles = solveArm(step.from.x, step.from.y)
+        const endAngles = solveArm(step.to.x, step.to.y)
+        angles = {
+          shoulder: startAngles.shoulder + (endAngles.shoulder - startAngles.shoulder) * progress,
+          elbow: startAngles.elbow + (endAngles.elbow - startAngles.elbow) * progress,
+        }
+
+        holding = step.holding
+        grip = step.grip
+
+        // The box appears on the pallet the instant the gripper lets go. Each
+        // step carries this flag because the three handling styles do not all
+        // have the same number of steps.
+        if (step.placed) {
+          done = index + 1
+        }
+      }
+
+      const point = gripperPoint(angles.shoulder, angles.elbow)
+      if (shoulderRef.current) {
+        shoulderRef.current.setAttribute('transform', `rotate(${angles.shoulder.toFixed(2)} ${SHOULDER.x} ${SHOULDER.y})`)
+      }
+      if (elbowRef.current) {
+        // The elbow group sits inside the shoulder group, so it already
+        // carries the shoulder rotation. Its pivot must therefore be given in
+        // the unrotated drawing, which is simply where the elbow is drawn.
+        elbowRef.current.setAttribute(
+          'transform',
+          `rotate(${angles.elbow.toFixed(2)} ${SHOULDER.x} ${SHOULDER.y - UPPER_ARM})`,
+        )
+      }
+
+      const spread = grip === 'closed' || grip === 'closing' ? 0 : 2.6
+      if (fingerLeftRef.current) fingerLeftRef.current.setAttribute('transform', `translate(${-spread} 0)`)
+      if (fingerRightRef.current) fingerRightRef.current.setAttribute('transform', `translate(${spread} 0)`)
+
+      if (carriedRef.current) {
+        carriedRef.current.setAttribute('opacity', holding ? '1' : '0')
+        carriedRef.current.setAttribute(
+          'transform',
+          `translate(${(point.x - BOX_W / 2).toFixed(2)} ${point.y.toFixed(2)})`,
+        )
+      }
+
+      setPlaced((current) => (current === done ? current : done))
+    }
+
+    if (reduceMotion) {
+      paint(TIMELINE[3].start + TIMELINE[3].duration * 0.55)
+      return undefined
+    }
+
+    if (!running) {
+      // Leave the arm exactly where it stopped.
+      return undefined
+    }
+
+    const clock = clockRef.current
+    clock.last = performance.now()
+
+    const tick = (now) => {
+      const delta = Math.min(now - clock.last, 60)
+      clock.last = now
+      clock.elapsed += delta
+      paint(clock.elapsed)
+      clock.frame = window.requestAnimationFrame(tick)
+    }
+
+    clock.frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(clock.frame)
+  }, [running])
+
+  const stack = []
+  for (let i = 0; i < placed; i += 1) {
+    const slot = slotFor(i)
+    stack.push(
+      <rect
+        key={i}
+        x={slot.x}
+        y={slot.y}
+        width={BOX_W}
+        height={BOX_H}
+        rx="1.5"
+        fill="#8a6540"
+        stroke="#b08356"
+        strokeWidth="1"
+      />,
+    )
+  }
+
   return (
-    <div className={running ? '' : 'arm-halted'}>
+    <div>
       <svg
-        viewBox="0 0 260 220"
+        viewBox="0 0 300 220"
         className="w-full"
         role="img"
-        aria-label={running ? 'Robot arm moving boxes' : 'Robot arm stopped'}
+        aria-label={
+          running
+            ? `Robot arm picking boxes from the conveyor and stacking them on a pallet. ${placed} of ${BOXES_PER_PALLET} placed.`
+            : 'Robot arm stopped'
+        }
       >
         <defs>
           <linearGradient id="armGrad" x1="0" y1="0" x2="1" y2="0">
@@ -1757,48 +2110,132 @@ function RobotArm({ running }) {
           </linearGradient>
         </defs>
 
-        <line x1="0" y1="192" x2="260" y2="192" stroke="#1e293b" strokeWidth="2" />
+        {/* floor */}
+        <line x1="0" y1="196" x2="300" y2="196" stroke="#1e293b" strokeWidth="2" />
 
-        <rect x="4" y="160" width="72" height="12" rx="2" fill="#1e293b" stroke="#334155" strokeWidth="1" />
-        <g clipPath="inset(0)">
-          <g className="belt-move">
-            {[0, 24, 48, 72, 96].map((x) => (
-              <rect key={x} x={4 + x} y="163" width="12" height="6" rx="1" fill="#334155" />
+        {/* conveyor feeding boxes in */}
+        <rect x="2" y="155" width="86" height="11" rx="2" fill="#1e293b" stroke="#334155" strokeWidth="1" />
+        <g clipPath="url(#beltClip)">
+          <g className={running ? 'belt-move' : undefined}>
+            {[0, 22, 44, 66, 88, 110].map((offset) => (
+              <rect key={offset} x={2 + offset} y="158" width="11" height="5" rx="1" fill="#334155" />
             ))}
           </g>
         </g>
-        <rect x="14" y="146" width="18" height="14" rx="2" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
-        <rect x="44" y="146" width="18" height="14" rx="2" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
+        <clipPath id="beltClip">
+          <rect x="2" y="155" width="86" height="11" />
+        </clipPath>
 
-        <rect x="176" y="180" width="72" height="10" rx="2" fill="#3f3324" stroke="#5c4832" strokeWidth="1" />
-        <rect x="182" y="164" width="28" height="16" rx="2" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
-        <rect x="214" y="164" width="28" height="16" rx="2" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
-        <rect x="182" y="148" width="28" height="16" rx="2" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
+        {/* queue of boxes waiting to be picked */}
+        <rect x="6" y="144" width={BOX_W} height={BOX_H} rx="1.5" fill="#7a5936" stroke="#a2764c" strokeWidth="1" />
+        <rect x="23" y="144" width={BOX_W} height={BOX_H} rx="1.5" fill="#7a5936" stroke="#a2764c" strokeWidth="1" />
+        <rect x="42" y="144" width={BOX_W} height={BOX_H} rx="1.5" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
 
-        <rect x="70" y="168" width="44" height="24" rx="3" fill="#1e293b" stroke="#475569" strokeWidth="1.5" />
-        <rect x="78" y="156" width="28" height="14" rx="2" fill="#334155" stroke="#475569" strokeWidth="1.2" />
+        {/* pallet */}
+        <rect x="145" y={PALLET_DECK_Y} width="72" height="9" rx="1.5" fill="#3f3324" stroke="#5c4832" strokeWidth="1" />
+        <rect x="149" y={PALLET_DECK_Y + 9} width="8" height="6" fill="#3a2f22" />
+        <rect x="177" y={PALLET_DECK_Y + 9} width="8" height="6" fill="#3a2f22" />
+        <rect x="205" y={PALLET_DECK_Y + 9} width="8" height="6" fill="#3a2f22" />
 
-        <g className="arm-shoulder">
-          <rect x="84" y="86" width="16" height="74" rx="7" fill="url(#armGrad)" />
-          <circle cx="92" cy="156" r="9" fill="#0f172a" stroke="#6f9bf0" strokeWidth="2.5" />
-          <g className="arm-elbow">
-            <rect x="85" y="26" width="14" height="62" rx="6" fill="#94a3b8" />
-            <circle cx="92" cy="84" r="7.5" fill="#0f172a" stroke="#94a3b8" strokeWidth="2.5" />
-            <rect x="82" y="16" width="20" height="10" rx="2" fill="#475569" />
-            <rect x="79" y="8" width="6" height="12" rx="1.5" fill="#64748b" />
-            <rect x="99" y="8" width="6" height="12" rx="1.5" fill="#64748b" />
-            {running && (
-              <rect x="84" y="9" width="16" height="12" rx="2" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
-            )}
+        {/* boxes already stacked */}
+        {stack}
+
+        {/* pedestal the arm is bolted to */}
+        <rect x="86" y="186" width="48" height="10" rx="2" fill="#1e293b" stroke="#475569" strokeWidth="1.5" />
+        <rect x="98" y="103" width="24" height="85" rx="3" fill="#22303f" stroke="#475569" strokeWidth="1.4" />
+        <rect x="103" y="112" width="14" height="4" rx="1" fill="#334155" />
+        <rect x="103" y="140" width="14" height="4" rx="1" fill="#334155" />
+        <rect x="103" y="168" width="14" height="4" rx="1" fill="#334155" />
+
+        {/* the arm itself */}
+        <g ref={shoulderRef}>
+          <rect
+            x={SHOULDER.x - 8}
+            y={SHOULDER.y - UPPER_ARM}
+            width="16"
+            height={UPPER_ARM}
+            rx="7"
+            fill="url(#armGrad)"
+          />
+          <circle cx={SHOULDER.x} cy={SHOULDER.y} r="9" fill="#0f172a" stroke="#6f9bf0" strokeWidth="2.5" />
+
+          <g ref={elbowRef}>
+            <rect
+              x={SHOULDER.x - 7}
+              y={SHOULDER.y - UPPER_ARM - FOREARM}
+              width="14"
+              height={FOREARM}
+              rx="6"
+              fill="#94a3b8"
+            />
+            <circle
+              cx={SHOULDER.x}
+              cy={SHOULDER.y - UPPER_ARM}
+              r="7.5"
+              fill="#0f172a"
+              stroke="#94a3b8"
+              strokeWidth="2.5"
+            />
+
+            {/* wrist and gripper */}
+            <rect
+              x={SHOULDER.x - 10}
+              y={SHOULDER.y - UPPER_ARM - FOREARM - 8}
+              width="20"
+              height="9"
+              rx="2"
+              fill="#475569"
+            />
+            <rect
+              ref={fingerLeftRef}
+              x={SHOULDER.x - 9}
+              y={SHOULDER.y - UPPER_ARM - FOREARM - 15}
+              width="5"
+              height="9"
+              rx="1.5"
+              fill="#64748b"
+            />
+            <rect
+              ref={fingerRightRef}
+              x={SHOULDER.x + 4}
+              y={SHOULDER.y - UPPER_ARM - FOREARM - 15}
+              width="5"
+              height="9"
+              rx="1.5"
+              fill="#64748b"
+            />
           </g>
         </g>
 
-        <circle cx="92" cy="163" r="3.5" fill={running ? '#2dd4bf' : '#f59e0b'}>
+        {/* the box currently in the gripper */}
+        <g ref={carriedRef} opacity="0">
+          <rect width={BOX_W} height={BOX_H} rx="1.5" fill="#8a6540" stroke="#b08356" strokeWidth="1" />
+        </g>
+
+        {/* status lamp on the base */}
+        <circle cx="110" cy="178" r="3.5" fill={running ? '#2dd4bf' : '#f59e0b'}>
           {running && (
             <animate attributeName="opacity" values="1;0.35;1" dur="1.6s" repeatCount="indefinite" />
           )}
         </circle>
       </svg>
+
+      <div className="mt-2 flex items-center justify-between px-1">
+        <span className="font-mono text-[10px] tracking-[0.1em] text-slate-500 uppercase">
+          Boxes on this pallet
+        </span>
+        <span className="font-mono text-xs font-semibold text-slate-300 tabular-nums">
+          {placed} of {BOXES_PER_PALLET}
+        </span>
+      </div>
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-800">
+        <div
+          className={`h-full rounded-full transition-[width] duration-200 ${
+            running ? 'bg-teal-400' : 'bg-amber-400'
+          }`}
+          style={{ width: `${(placed / BOXES_PER_PALLET) * 100}%` }}
+        />
+      </div>
     </div>
   )
 }
