@@ -52,8 +52,26 @@ import {
 // screen and out of version control, but it is not server side security.
 // Proper protection would need a backend to check the password.
 const VALID_EMAIL = (import.meta.env.VITE_AUTH_EMAIL || '').trim().toLowerCase()
-const VALID_PASSWORD = import.meta.env.VITE_AUTH_PASSWORD || ''
+const VALID_PASSWORD = (import.meta.env.VITE_AUTH_PASSWORD || '').trim()
 const AUTH_CONFIGURED = Boolean(VALID_EMAIL && VALID_PASSWORD)
+
+// Names the exact variable that did not arrive, so a misspelt name or a
+// missing rebuild can be identified from the screen instead of guessed at.
+const MISSING_VARS = [
+  VALID_EMAIL ? null : 'VITE_AUTH_EMAIL',
+  VALID_PASSWORD ? null : 'VITE_AUTH_PASSWORD',
+].filter(Boolean)
+
+if (!AUTH_CONFIGURED) {
+  const seen = Object.keys(import.meta.env).filter((k) => k.startsWith('VITE_'))
+  console.warn(
+    '[Polyborg] Sign in is not configured.\n' +
+      `Missing: ${MISSING_VARS.join(', ')}\n` +
+      `Variables this build actually received: ${seen.length ? seen.join(', ') : '(none)'}\n` +
+      'Add them in Vercel under Settings then Environment Variables, then redeploy ' +
+      'with the build cache turned off.',
+  )
+}
 
 const AUTH_KEY = 'polyborg_auth_token'
 const STATE_KEY = 'polyborg_workspace_state'
@@ -589,8 +607,19 @@ function LoginPage({ onLogin }) {
                   <div>
                     <p className="text-xs font-semibold text-amber-200">Sign in is not set up yet</p>
                     <p className="mt-1 text-xs leading-relaxed text-amber-100/80">
-                      Add the sign in email address and password as environment variables, then
-                      build again. The project README explains where they go.
+                      This build did not receive{' '}
+                      {MISSING_VARS.length === 2 ? 'either of these:' : 'this:'}
+                    </p>
+                    <ul className="mt-1.5 space-y-0.5">
+                      {MISSING_VARS.map((name) => (
+                        <li key={name} className="font-mono text-[11px] text-amber-200">
+                          {name}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-xs leading-relaxed text-amber-100/80">
+                      Add them in Vercel under Settings, then Environment Variables, then redeploy
+                      with the build cache switched off. Open the browser console for more detail.
                     </p>
                   </div>
                 </div>
