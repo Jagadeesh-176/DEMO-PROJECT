@@ -253,20 +253,20 @@ function Logo({ size = 'normal' }) {
   return (
     <div className="flex items-center gap-3">
       <div
-        className={`relative flex ${box} shrink-0 items-center justify-center rounded-xl bg-safety-500 shadow-lg shadow-safety-500/25`}
+        className={`relative flex ${box} shrink-0 items-center justify-center rounded-xl bg-signal-600 shadow-lg shadow-signal-600/30`}
       >
         <svg
           viewBox="0 0 24 24"
           className={glyph}
           fill="none"
-          stroke="#0b1220"
+          stroke="#ffffff"
           strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
           <path d="M12 3 L19 7 L19 15 L12 19 L5 15 L5 7 Z" />
-          <circle cx="12" cy="11" r="2.6" fill="#0b1220" stroke="none" />
+          <circle cx="12" cy="11" r="2.6" fill="#ffffff" stroke="none" />
         </svg>
       </div>
       <div className="leading-tight">
@@ -298,9 +298,9 @@ function InfoBox({ title, body, todo }) {
         <p className="text-[15px] font-semibold text-white">{title}</p>
         <p className="text-sm leading-relaxed text-slate-300">{body}</p>
         <div className="flex items-start gap-2.5 rounded-lg border border-slate-700/60 bg-slate-900/60 px-3.5 py-3">
-          <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-safety-400" />
+          <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-signal-300" />
           <p className="text-sm leading-relaxed text-slate-200">
-            <span className="font-semibold text-safety-400">What you do here: </span>
+            <span className="font-semibold text-signal-300">What you do here: </span>
             {todo}
           </p>
         </div>
@@ -312,7 +312,7 @@ function InfoBox({ title, body, todo }) {
 function PageTitle({ step, title, subtitle }) {
   return (
     <div className="mb-5">
-      <div className="mb-1.5 font-mono text-[11px] font-semibold tracking-[0.18em] text-safety-500 uppercase">
+      <div className="mb-1.5 font-mono text-[11px] font-semibold tracking-[0.18em] text-signal-400 uppercase">
         {step}
       </div>
       <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{title}</h1>
@@ -485,7 +485,7 @@ function LoginPage({ onLogin }) {
                     Email address
                   </label>
                   <div
-                    className={`flex items-center gap-2.5 rounded-lg border bg-slate-950/60 px-3.5 transition-colors focus-within:border-safety-500 ${
+                    className={`flex items-center gap-2.5 rounded-lg border bg-slate-950/60 px-3.5 transition-colors focus-within:border-signal-500 ${
                       errors.email ? 'border-red-500/60' : 'border-slate-700'
                     }`}
                   >
@@ -519,7 +519,7 @@ function LoginPage({ onLogin }) {
                     Password
                   </label>
                   <div
-                    className={`flex items-center gap-2.5 rounded-lg border bg-slate-950/60 px-3.5 transition-colors focus-within:border-safety-500 ${
+                    className={`flex items-center gap-2.5 rounded-lg border bg-slate-950/60 px-3.5 transition-colors focus-within:border-signal-500 ${
                       errors.password ? 'border-red-500/60' : 'border-slate-700'
                     }`}
                   >
@@ -540,7 +540,7 @@ function LoginPage({ onLogin }) {
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="shrink-0 rounded p-1 text-slate-500 transition-colors hover:text-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-safety-400"
+                      className="shrink-0 rounded p-1 text-slate-500 transition-colors hover:text-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-signal-400"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -557,7 +557,7 @@ function LoginPage({ onLogin }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-7 flex w-full items-center justify-center gap-2 rounded-lg bg-safety-500 px-5 py-3.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-safety-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-safety-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-70"
+                className="mt-7 flex w-full items-center justify-center gap-2 rounded-lg bg-signal-600 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-signal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-signal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-70"
               >
                 {submitting ? 'Checking your details' : 'Sign in'}
                 {!submitting && <ArrowRight className="h-4 w-4" />}
@@ -623,7 +623,7 @@ function Header({ email, onLogout, onReset }) {
           </button>
 
           <div className="hidden items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/80 py-1.5 pr-3 pl-2 md:flex">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-safety-500/15 text-[10px] font-bold text-safety-400">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-signal-500/15 text-[10px] font-bold text-signal-300">
               DP
             </span>
             <span className="font-mono text-[11px] text-slate-400">{email}</span>
@@ -632,7 +632,7 @@ function Header({ email, onLogout, onReset }) {
           <button
             type="button"
             onClick={onLogout}
-            className="flex items-center gap-1.5 rounded-lg bg-safety-500 px-2.5 py-2.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-safety-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-safety-400 sm:px-3"
+            className="flex items-center gap-1.5 rounded-lg bg-signal-600 px-2.5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-signal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-signal-400 sm:px-3"
           >
             <LogOut className="h-3.5 w-3.5 shrink-0" />
             <span className="hidden sm:inline">Log out</span>
@@ -673,13 +673,13 @@ function Sidebar({ currentStage, goToStage, completed }) {
               key={stage.id}
               type="button"
               onClick={() => goToStage(stage.id)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-safety-400 ${
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-signal-400 ${
                 active
-                  ? 'bg-safety-500/12 text-white ring-1 ring-safety-500/40 ring-inset'
+                  ? 'bg-signal-500/14 text-white ring-1 ring-signal-500/40 ring-inset'
                   : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100'
               }`}
             >
-              <IconCmp className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-safety-500' : ''}`} />
+              <IconCmp className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-signal-400' : ''}`} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">{stage.label}</span>
                 <span className="block font-mono text-[10px] tracking-[0.1em] text-slate-500 uppercase">
@@ -724,10 +724,10 @@ function BottomNav({ currentStage, goToStage, completed }) {
               type="button"
               onClick={() => goToStage(stage.id)}
               className={`relative flex flex-1 flex-col items-center gap-1 px-1 py-2.5 transition-colors ${
-                active ? 'text-safety-500' : 'text-slate-500'
+                active ? 'text-signal-400' : 'text-slate-500'
               }`}
             >
-              {active && <span className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-safety-500" />}
+              {active && <span className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-signal-600" />}
               <span className="relative">
                 <IconCmp className="h-[19px] w-[19px]" />
                 {done && !active && (
@@ -827,7 +827,7 @@ function ScopeStage({ scopeSpecs, setScopeSpecs, notify, addLog }) {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
         <div>
-          <Panel title="Your phone camera" icon={Camera} accent="text-safety-500">
+          <Panel title="Your phone camera" icon={Camera} accent="text-signal-400">
             <div className="mx-auto w-full max-w-[260px]">
               <div className="relative overflow-hidden rounded-[26px] border-4 border-slate-800 bg-slate-950 shadow-2xl">
                 <div className="absolute inset-x-0 top-0 z-20 flex justify-center">
@@ -854,7 +854,7 @@ function ScopeStage({ scopeSpecs, setScopeSpecs, notify, addLog }) {
                     <rect x="106" y="212" width="54" height="8" rx="1.5" fill="#3f3324" stroke="#5c4832" strokeWidth="0.9" />
                     <rect x="112" y="196" width="20" height="16" rx="1.5" fill="#7c5a3a" stroke="#a97c4f" strokeWidth="0.8" />
                     <rect x="135" y="196" width="20" height="16" rx="1.5" fill="#7c5a3a" stroke="#a97c4f" strokeWidth="0.8" />
-                    <rect x="98" y="188" width="72" height="42" fill="none" stroke="#FF7A1A" strokeWidth="1" strokeDasharray="4 3" opacity="0.55" />
+                    <rect x="98" y="188" width="72" height="42" fill="none" stroke="#6f9bf0" strokeWidth="1" strokeDasharray="4 3" opacity="0.55" />
                     <rect x="36" y="16" width="30" height="5" rx="2" fill="#334155" />
                     <rect x="112" y="16" width="30" height="5" rx="2" fill="#334155" />
                     <ellipse cx="51" cy="34" rx="26" ry="12" fill="#fbbf24" opacity="0.06" />
@@ -909,7 +909,7 @@ function ScopeStage({ scopeSpecs, setScopeSpecs, notify, addLog }) {
                     onClick={startRecording}
                     disabled={phase !== 'idle'}
                     aria-label="Record factory floor"
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-safety-400 ${
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-signal-400 ${
                       phase === 'idle'
                         ? 'border-slate-700 bg-red-500 hover:bg-red-400'
                         : 'border-slate-800 bg-slate-700'
@@ -930,7 +930,7 @@ function ScopeStage({ scopeSpecs, setScopeSpecs, notify, addLog }) {
                 disabled={phase === 'recording' || phase === 'scanning'}
                 className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 ${
                   phase === 'idle'
-                    ? 'bg-safety-500 text-slate-950 hover:bg-safety-400 focus-visible:ring-safety-400'
+                    ? 'bg-signal-600 text-white hover:bg-signal-500 focus-visible:ring-signal-400'
                     : 'border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 focus-visible:ring-slate-500'
                 }`}
               >
@@ -1011,7 +1011,7 @@ function ScopeStage({ scopeSpecs, setScopeSpecs, notify, addLog }) {
 
           {phase === 'done' && scopeSpecs && (
             <div className="fade-rise">
-              <Panel title="Project specification sheet" icon={FileText} accent="text-safety-500">
+              <Panel title="Project specification sheet" icon={FileText} accent="text-signal-400">
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 font-mono text-[10px] font-semibold tracking-[0.1em] text-teal-300 uppercase">
                     Saved to your session
@@ -1041,8 +1041,8 @@ function ScopeStage({ scopeSpecs, setScopeSpecs, notify, addLog }) {
                   })}
                 </dl>
 
-                <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-safety-500/25 bg-safety-500/[0.07] px-3.5 py-3">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-safety-400" />
+                <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-signal-500/25 bg-signal-500/[0.09] px-3.5 py-3">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-signal-300" />
                   <p className="text-xs leading-relaxed text-slate-300">
                     This single sheet is what every builder will price against. Because they all read
                     the identical sheet, their prices can finally be compared side by side.
@@ -1145,7 +1145,7 @@ function SourceStage({ selectedBuilder, setSelectedBuilder, notify, addLog }) {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
         <div>
-          <Panel title="Narrow the search" icon={Users} accent="text-safety-500">
+          <Panel title="Narrow the search" icon={Users} accent="text-signal-400">
             <div className="space-y-5">
               <div>
                 <label
@@ -1158,7 +1158,7 @@ function SourceStage({ selectedBuilder, setSelectedBuilder, notify, addLog }) {
                   id="industry-focus"
                   value={industry}
                   onChange={(e) => changeIndustry(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-white transition-colors focus:border-safety-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3.5 py-2.5 text-sm text-white transition-colors focus:border-signal-500 focus:outline-none"
                 >
                   {INDUSTRIES.map((opt) => (
                     <option key={opt} value={opt}>
@@ -1244,7 +1244,7 @@ function SourceStage({ selectedBuilder, setSelectedBuilder, notify, addLog }) {
                   ? 'cursor-default border border-teal-500/40 bg-teal-500/15 text-teal-300'
                   : matched.length === 0
                     ? 'cursor-not-allowed border border-slate-800 bg-slate-900 text-slate-600'
-                    : 'bg-safety-500 text-slate-950 hover:bg-safety-400 focus-visible:ring-safety-400'
+                    : 'bg-signal-600 text-white hover:bg-signal-500 focus-visible:ring-signal-400'
               }`}
             >
               {planSent ? (
@@ -1329,7 +1329,7 @@ function SourceStage({ selectedBuilder, setSelectedBuilder, notify, addLog }) {
                     <div className="mt-auto grid grid-cols-2 gap-2 border-t border-slate-800 pt-3">
                       <div>
                         <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-safety-500 text-safety-500" />
+                          <Star className="h-3 w-3 fill-signal-400 text-signal-400" />
                           <span className="text-sm font-semibold text-white tabular-nums">
                             {builder.rating}
                           </span>
@@ -1351,7 +1351,7 @@ function SourceStage({ selectedBuilder, setSelectedBuilder, notify, addLog }) {
                       className={`mt-3 w-full rounded-lg px-3 py-2 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 ${
                         isSelected
                           ? 'cursor-default border border-teal-500/40 bg-teal-500/15 text-teal-300'
-                          : 'border border-slate-700 bg-slate-800 text-slate-200 hover:border-safety-500/50 hover:bg-slate-700 focus-visible:ring-safety-400'
+                          : 'border border-slate-700 bg-slate-800 text-slate-200 hover:border-signal-500/50 hover:bg-slate-700 focus-visible:ring-signal-400'
                       }`}
                     >
                       {isSelected ? 'This is your selected builder' : 'Select this builder'}
@@ -1594,7 +1594,7 @@ function PriceStage({ revealHidden, setRevealHidden, notify, addLog }) {
 
       {revealHidden && (
         <div className="fade-rise mt-5">
-          <Panel title="What just happened" icon={TrendingDown} accent="text-safety-500">
+          <Panel title="What just happened" icon={TrendingDown} accent="text-signal-400">
             <p className="text-sm leading-relaxed text-slate-300">
               {paperWinner.name} wrote the lowest number on paper at {money(paperWinner.base)}. But
               they left out {money(paperWinner.hiddenTotal)} of work you would still have to pay for,
@@ -1669,7 +1669,7 @@ function SpeedDial({ speed }) {
           y1={tickInner.y}
           x2={tickOuter.x}
           y2={tickOuter.y}
-          stroke="#FF7A1A"
+          stroke="#6f9bf0"
           strokeWidth="3"
           strokeLinecap="round"
         />
@@ -1683,7 +1683,7 @@ function SpeedDial({ speed }) {
 
       <div className="mt-1 flex items-center justify-center gap-4 text-[11px]">
         <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-sm bg-safety-500" />
+          <span className="h-2 w-2 rounded-sm bg-signal-600" />
           <span className="text-slate-400">Agreed target {TARGET_SPEED}</span>
         </span>
         <span className="flex items-center gap-1.5">
@@ -1706,8 +1706,8 @@ function RobotArm({ running }) {
       >
         <defs>
           <linearGradient id="armGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#FF9A4D" />
-            <stop offset="100%" stopColor="#E8630A" />
+            <stop offset="0%" stopColor="#93b4f5" />
+            <stop offset="100%" stopColor="#2b52c9" />
           </linearGradient>
         </defs>
 
@@ -1734,7 +1734,7 @@ function RobotArm({ running }) {
 
         <g className="arm-shoulder">
           <rect x="84" y="86" width="16" height="74" rx="7" fill="url(#armGrad)" />
-          <circle cx="92" cy="156" r="9" fill="#0f172a" stroke="#FF7A1A" strokeWidth="2.5" />
+          <circle cx="92" cy="156" r="9" fill="#0f172a" stroke="#6f9bf0" strokeWidth="2.5" />
           <g className="arm-elbow">
             <rect x="85" y="26" width="14" height="62" rx="6" fill="#94a3b8" />
             <circle cx="92" cy="84" r="7.5" fill="#0f172a" stroke="#94a3b8" strokeWidth="2.5" />
@@ -1912,7 +1912,7 @@ function RunStage({
             </button>
           </Panel>
 
-          <Panel title="Speed against your agreed target" icon={Gauge} accent="text-safety-500">
+          <Panel title="Speed against your agreed target" icon={Gauge} accent="text-signal-400">
             <SpeedDial speed={speed} />
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
@@ -2038,7 +2038,7 @@ function RunStage({
                     key={`${entry.time}-${i}`}
                     className="flex items-start gap-2.5 border-b border-slate-800/70 pb-2 last:border-b-0"
                   >
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-safety-500" />
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-signal-600" />
                     <div className="min-w-0">
                       <p className="text-xs leading-relaxed text-slate-300">{entry.message}</p>
                       <span className="font-mono text-[10px] text-slate-600">{entry.time}</span>

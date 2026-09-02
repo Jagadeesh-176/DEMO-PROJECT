@@ -2,13 +2,22 @@
 
 /* Tailwind version four is configured in CSS rather than a JavaScript file. */
 @theme {
-  --color-safety-300: #ffb87a;
-  --color-safety-400: #ff9a4d;
-  --color-safety-500: #ff7a1a;
-  --color-safety-600: #e8630a;
+  /* Polyborg brand palette.
+     "signal" is the company's own accent colour, taken from polyborg.ai:
+     --color-signal #1e3a8a and its dim variant #16297a. The lighter steps are
+     tints of that same navy, added so the accent stays readable against this
+     application's dark background. */
+  --color-signal-300: #a3c0f7;
+  --color-signal-400: #6f9bf0;
+  --color-signal-500: #3b6fe0;
+  --color-signal-600: #2b52c9;
+  --color-signal-700: #2547a8;
+  --color-signal-900: #1e3a8a;
+  --color-signal-950: #16297a;
 
-  --font-sans: 'Inter Tight', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* Geist is the typeface used on polyborg.ai. */
+  --font-sans: 'Geist', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, Consolas, monospace;
 }
 
 html,
