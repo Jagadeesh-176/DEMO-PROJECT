@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+/* Tailwind version four is configured in CSS rather than a JavaScript file. */
+@theme {
+  --color-safety-300: #ffb87a;
+  --color-safety-400: #ff9a4d;
+  --color-safety-500: #ff7a1a;
+  --color-safety-600: #e8630a;
+
+  --font-sans: 'Inter Tight', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+
+html,
+body {
+  background-color: #020617;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ---------- robot arm ---------- */
+.arm-shoulder {
+  transform-box: view-box;
+  transform-origin: 92px 156px;
+  animation: shoulderSwing 3.2s ease-in-out infinite;
+}
+.arm-elbow {
+  transform-box: view-box;
+  transform-origin: 92px 84px;
+  animation: elbowSwing 3.2s ease-in-out infinite;
+}
+.arm-halted .arm-shoulder,
+.arm-halted .arm-elbow {
+  animation-play-state: paused;
+}
+
+@keyframes shoulderSwing {
+  0% {
+    transform: rotate(-30deg);
+  }
+  45% {
+    transform: rotate(34deg);
+  }
+  55% {
+    transform: rotate(34deg);
+  }
+  100% {
+    transform: rotate(-30deg);
+  }
+}
+@keyframes elbowSwing {
+  0% {
+    transform: rotate(46deg);
+  }
+  45% {
+    transform: rotate(2deg);
+  }
+  55% {
+    transform: rotate(2deg);
+  }
+  100% {
+    transform: rotate(46deg);
+  }
+}
+
+/* ---------- conveyor belt ---------- */
+.belt-move {
+  animation: beltSlide 1.1s linear infinite;
+}
+.arm-halted .belt-move {
+  animation-play-state: paused;
+}
+@keyframes beltSlide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-24px);
+  }
+}
+
+/* ---------- status indicators ---------- */
+.amber-flash {
+  animation: amberPulse 1.15s ease-in-out infinite;
+}
+@keyframes amberPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.42;
+  }
+}
+
+.rec-dot {
+  animation: recBlink 1s steps(2, start) infinite;
+}
+@keyframes recBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.scan-sweep {
+  animation: sweepDown 1.6s ease-in-out infinite;
+}
+@keyframes sweepDown {
+  0% {
+    transform: translateY(-8%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(108%);
+    opacity: 0;
+  }
+}
+
+/* ---------- entrances ---------- */
+.fade-rise {
+  animation: fadeRise 0.45s ease-out both;
+}
+@keyframes fadeRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-open {
+  animation: slideOpen 0.35s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+@keyframes slideOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-in {
+  animation: toastIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arm-shoulder,
+  .arm-elbow,
+  .belt-move,
+  .amber-flash,
+  .rec-dot,
+  .scan-sweep,
+  .fade-rise,
+  .slide-open,
+  .toast-in {
+    animation: none !important;
+  }
+}
