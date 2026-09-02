@@ -616,7 +616,7 @@ function Header({ email, onLogout, onReset }) {
             type="button"
             onClick={onReset}
             title="Clear the saved progress and start the four stages again"
-            className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 sm:px-3"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-2.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 sm:px-3"
           >
             <RotateCcw className="h-3.5 w-3.5 shrink-0" />
             <span className="hidden sm:inline">Reset application state</span>
@@ -632,7 +632,7 @@ function Header({ email, onLogout, onReset }) {
           <button
             type="button"
             onClick={onLogout}
-            className="flex items-center gap-1.5 rounded-lg bg-safety-500 px-2.5 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-safety-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-safety-400 sm:px-3"
+            className="flex items-center gap-1.5 rounded-lg bg-safety-500 px-2.5 py-2.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-safety-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-safety-400 sm:px-3"
           >
             <LogOut className="h-3.5 w-3.5 shrink-0" />
             <span className="hidden sm:inline">Log out</span>
@@ -1297,14 +1297,14 @@ function SourceStage({ selectedBuilder, setSelectedBuilder, notify, addLog }) {
                       {isSelected ? (
                         <span className="flex shrink-0 items-center gap-1 rounded-full border border-teal-500/50 bg-teal-500/20 px-2 py-0.5">
                           <CheckCircle2 className="h-3 w-3 text-teal-300" />
-                          <span className="font-mono text-[9px] font-bold tracking-wider text-teal-200 uppercase">
+                          <span className="font-mono text-[10px] font-bold tracking-wider text-teal-200 uppercase">
                             Selected
                           </span>
                         </span>
                       ) : (
                         <span className="flex shrink-0 items-center gap-1 rounded-full border border-slate-700 bg-slate-800/60 px-2 py-0.5">
                           <ShieldCheck className="h-3 w-3 text-slate-400" />
-                          <span className="font-mono text-[9px] font-semibold tracking-wider text-slate-400 uppercase">
+                          <span className="font-mono text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
                             Checked
                           </span>
                         </span>
@@ -1496,12 +1496,12 @@ function PriceStage({ revealHidden, setRevealHidden, notify, addLog }) {
                     </div>
                   </div>
                   {highlight && (
-                    <span className="shrink-0 rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-teal-300 uppercase">
+                    <span className="shrink-0 rounded-full border border-teal-500/40 bg-teal-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-teal-300 uppercase">
                       {revealHidden ? 'Best value' : 'Looks cheapest'}
                     </span>
                   )}
                   {revealHidden && isTrueLoser && (
-                    <span className="shrink-0 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-red-300 uppercase">
+                    <span className="shrink-0 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-red-300 uppercase">
                       Most expensive
                     </span>
                   )}
@@ -1884,7 +1884,11 @@ function RunStage({
             </div>
 
             <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-              <RobotArm running={robotRunning} />
+              {/* Capped so the arm stays in proportion on very wide screens
+                  instead of stretching to fill the whole panel. */}
+              <div className="mx-auto w-full max-w-[460px]">
+                <RobotArm running={robotRunning} />
+              </div>
             </div>
 
             <button
