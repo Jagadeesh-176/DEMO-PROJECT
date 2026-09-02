@@ -42,8 +42,18 @@ import {
    Constants
    ========================================================= */
 
-const VALID_EMAIL = 'dev@polyborg.ai'
-const VALID_PASSWORD = 'polyborg@123!'
+// Sign in details come from environment variables, so they are not written
+// into the source code and never reach the repository.
+//   Local:      put them in a .env file (see .env.example). It is gitignored.
+//   Production: add them under Environment Variables in the Vercel project.
+//
+// Note: Vite replaces VITE_ variables at build time, so their values end up
+// inside the JavaScript the browser downloads. This keeps the details off the
+// screen and out of version control, but it is not server side security.
+// Proper protection would need a backend to check the password.
+const VALID_EMAIL = (import.meta.env.VITE_AUTH_EMAIL || '').trim().toLowerCase()
+const VALID_PASSWORD = import.meta.env.VITE_AUTH_PASSWORD || ''
+const AUTH_CONFIGURED = Boolean(VALID_EMAIL && VALID_PASSWORD)
 
 const AUTH_KEY = 'polyborg_auth_token'
 const STATE_KEY = 'polyborg_workspace_state'
@@ -370,6 +380,16 @@ function LoginPage({ onLogin }) {
 
   function handleSubmit(event) {
     event.preventDefault()
+
+    if (!AUTH_CONFIGURED) {
+      setErrors({
+        form:
+          'Sign in is not set up on this deployment. The sign in email address and password ' +
+          'still need to be added as environment variables.',
+      })
+      return
+    }
+
     const next = {}
 
     if (!email.trim()) next.email = 'Please enter your email address.'
@@ -563,21 +583,18 @@ function LoginPage({ onLogin }) {
                 {!submitting && <ArrowRight className="h-4 w-4" />}
               </button>
 
-              <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3.5">
-                <div className="mb-2 font-mono text-[10px] font-semibold tracking-[0.12em] text-slate-500 uppercase">
-                  Demonstration account
+              {!AUTH_CONFIGURED && (
+                <div className="mt-6 flex items-start gap-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3.5">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                  <div>
+                    <p className="text-xs font-semibold text-amber-200">Sign in is not set up yet</p>
+                    <p className="mt-1 text-xs leading-relaxed text-amber-100/80">
+                      Add the sign in email address and password as environment variables, then
+                      build again. The project README explains where they go.
+                    </p>
+                  </div>
                 </div>
-                <dl className="space-y-1 font-mono text-xs">
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-500">Email</dt>
-                    <dd className="text-slate-300">{VALID_EMAIL}</dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-500">Password</dt>
-                    <dd className="text-slate-300">{VALID_PASSWORD}</dd>
-                  </div>
-                </dl>
-              </div>
+              )}
             </form>
           </div>
         </div>

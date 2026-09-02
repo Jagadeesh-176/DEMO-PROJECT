@@ -7,15 +7,34 @@ operator through four stages, from describing the job to watching the robot run 
 
 ## Sign in
 
-The prototype uses one demonstration account, shown on the login screen itself:
+The sign in email address and password are supplied through environment variables, so they are not
+written in the code and are not shown on the sign in screen.
 
-| Field    | Value             |
-| -------- | ----------------- |
-| Email    | `dev@polyborg.ai` |
-| Password | `polyborg@123!`   |
+**On your machine**
 
-> This is a front-end prototype. The check runs in the browser, so it keeps a casual visitor out of
-> the demonstration but is not real security. There is no server and no database.
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`:
+
+```
+VITE_AUTH_EMAIL=dev@polyborg.ai
+VITE_AUTH_PASSWORD=polyborg@123!
+```
+
+`.env` is gitignored, so it never reaches GitHub.
+
+**On Vercel** — add the same two names under **Project → Settings → Environment Variables**, then
+redeploy. Vercel does not apply new variables to a build that has already run.
+
+If the variables are missing, the sign in screen says so instead of failing silently.
+
+> **Understand what this does and does not do.** Vite replaces `VITE_` variables at build time, so
+> their values end up inside the JavaScript the browser downloads. This keeps the details off the
+> screen and out of the repository, but someone determined can still read them from the built
+> files. It is a soft gate, not real security. Protecting this properly would need a backend that
+> checks the password on a server.
 
 ## What it does
 
@@ -69,8 +88,8 @@ Then open the address Vite prints, usually <http://localhost:5173>.
 
 ## Deploying to Vercel
 
-This is a static front end. There is no backend, no database and **no environment variables**, so
-Vercel needs no configuration from you.
+This is a static front end with no backend and no database. The only configuration is the two
+sign in variables described above.
 
 1. Push this folder to a new GitHub repository:
 
@@ -94,7 +113,17 @@ Vercel needs no configuration from you.
    | Output Directory | `dist`          |
    | Install Command  | `npm install`   |
 
-4. Press **Deploy**. The first build takes about a minute, and you get a live address ending in
+4. Open **Environment Variables** on the same screen and add:
+
+   | Name | Value |
+   | ---- | ----- |
+   | `VITE_AUTH_EMAIL` | `dev@polyborg.ai` |
+   | `VITE_AUTH_PASSWORD` | `polyborg@123!` |
+
+   Adding them before the first deploy saves a rebuild. If you add them afterwards, go to
+   **Deployments**, open the newest one, and choose **Redeploy**.
+
+5. Press **Deploy**. The first build takes about a minute, and you get a live address ending in
    `.vercel.app`.
 
 Every later push to `main` redeploys the site automatically.
